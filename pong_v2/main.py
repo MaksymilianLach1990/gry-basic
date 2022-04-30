@@ -1,6 +1,12 @@
 import pygame
 import pygame.locals
 
+"""
+# Nalicznie punktów i rozpoczęcie nowej parti
+# Sterowanie klawiszami
+# Zwiększenie inteligencji NPC"""
+
+
 class Board(object):
     """
     Board for play. Responsible for the draw game window.
@@ -44,7 +50,7 @@ class PongGame(object):
         self.player1 = Racket(width=20, height=80, x=0, y=height/2)
         self.player2 = Racket(width=20, height=80, x=width - 20, y= height/2)
         self.ai = Ai(self.player2, self.ball)
-        self.judge = Judge(self.board, self.ball, self.player1, self.player2)
+        self.judge = Judge(self.board, self.ball, self.player1, self.ball)
 
     def run(self):
         """
@@ -123,6 +129,7 @@ class Ball(Drawable):
         along the X axis.
         """
         self.rect.move(self.start_x, self.start_y)
+        print(f"{self.rect.x}")
         self.bounce_x()
 
     def move(self, board, *args):
@@ -132,10 +139,10 @@ class Ball(Drawable):
         self.rect.x += self.x_speed
         self.rect.y += self.y_speed
 
-        if self.rect.x < 0 or self.rect.x > board.surface.get_width():
+        if self.rect.x < 0 or self.rect.x >= board.surface.get_width()-self.width:
             self.bounce_x()
         
-        if self.rect.y < 0 or self.rect.y > board.surface.get_height():
+        if self.rect.y < 0 or self.rect.y >= board.surface.get_height()-self.height:
             self.bounce_y()
 
         for racket in args:
@@ -191,16 +198,14 @@ class Judge(object):
         font_path = pygame.font.match_font('arial')
         self.font = pygame.font.Font(font_path, 64)
 
-    def update_score(self, board_height):
+    def update_score(self, board_width):
         """
         If necessary, he assigns points and brings the ball to its original position.
         """
-        if self.ball.rect.x < 0:
+        if self.ball.rect.x <= 0:
             self.score[0] += 1
-            self.ball.reset()
-        elif self.ball.rect.x > board_height:
+        elif self.ball.rect.x >= board_width-self.ball.width:
             self.score[1] += 1
-            self.ball.reset()
 
     def draw_text(self, surface, text, x, y):
         """
@@ -215,10 +220,10 @@ class Judge(object):
         """
         Updates and draws the results.
         """
-        height = self.board.surface.get_height()
-        self.update_score(height)
-
         width = self.board.surface.get_width()
+        self.update_score(width)
+
+        height = self.board.surface.get_height()
         self.draw_text(surface, "Player: {}".format(self.score[0]), width/2, height * 0.3)
         self.draw_text(surface, "Computer: {}".format(self.score[1]), width/2, height * 0.7)
 
