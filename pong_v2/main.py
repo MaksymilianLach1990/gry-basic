@@ -44,6 +44,7 @@ class PongGame(object):
         self.player1 = Racket(width=20, height=80, x=0, y=height/2)
         self.player2 = Racket(width=20, height=80, x=width - 20, y= height/2)
         self.ai = Ai(self.player2, self.ball)
+        self.judge = Judge(self.board, self.ball, self.player1, self.player2)
 
     def run(self):
         """
@@ -55,6 +56,7 @@ class PongGame(object):
                 self.ball,
                 self.player1,
                 self.player2,
+                self.judge,
             )
             self.ai.move()
             self.fps_clock.tick(30)
@@ -172,6 +174,53 @@ class Ai(object):
     def move(self):
         x = self.ball.rect.centerx
         self.racket.move(x)
+
+
+class Judge(object):
+    """
+    Game referee.
+    """
+
+    def __init__(self, board, ball, *args):
+        self.ball = ball
+        self.board = board
+        self.rackets = args
+        self.score = [0, 0]
+
+        pygame.font.init()
+        font_path = pygame.font.match_font('arial')
+        self.font = pygame.font.Font(font_path, 64)
+
+    def update_score(self, board_height):
+        """
+        If necessary, he assigns points and brings the ball to its original position.
+        """
+        if self.ball.rect.x < 0:
+            self.score[0] += 1
+            self.ball.reset()
+        elif self.ball.rect.x > board_height:
+            self.score[1] += 1
+            self.ball.reset()
+
+    def draw_text(self, surface, text, x, y):
+        """
+        Draws the indicated text in the correct place.
+        """
+        text = self.font.render(text, True, (150, 150, 150))
+        rect = text.get_rect()
+        rect.center = x, y
+        surface.blit(text, rect)
+
+    def draw_on(self, surface):
+        """
+        Updates and draws the results.
+        """
+        height = self.board.surface.get_height()
+        self.update_score(height)
+
+        width = self.board.surface.get_width()
+        self.draw_text(surface, "Player: {}".format(self.score[0]), width/2, height * 0.3)
+        self.draw_text(surface, "Computer: {}".format(self.score[1]), width/2, height * 0.7)
 
 if __name__ == "__main__":
     game = PongGame(800, 500)
