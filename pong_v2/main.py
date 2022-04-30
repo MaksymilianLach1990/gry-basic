@@ -148,6 +148,7 @@ class Racket(Drawable):
         self.rect.y += delta
 
 
+
 if __name__ == "__main__":
     game = PongGame(800, 500)
     game.run()
