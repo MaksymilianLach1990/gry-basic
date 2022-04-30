@@ -2,7 +2,7 @@ import pygame
 import pygame.locals
 
 """
-# Nalicznie punktów i rozpoczęcie nowej parti
+
 # Sterowanie klawiszami
 # Zwiększenie inteligencji NPC"""
 
@@ -50,7 +50,7 @@ class PongGame(object):
         self.player1 = Racket(width=20, height=80, x=0, y=height/2)
         self.player2 = Racket(width=20, height=80, x=width - 20, y= height/2)
         self.ai = Ai(self.player2, self.ball)
-        self.judge = Judge(self.board, self.ball, self.player1, self.ball)
+        self.judge = Judge(self.board, self.ball, self.player2)
 
     def run(self):
         """
@@ -128,9 +128,8 @@ class Ball(Drawable):
         Brings the ball to its initial position and inverts the velocity vector 
         along the X axis.
         """
-        self.rect.move(self.start_x, self.start_y)
-        print(f"{self.rect.x}")
-        self.bounce_x()
+        self.rect.x, self.rect.y = self.start_x, self.start_y
+        self.bounce_y()
 
     def move(self, board, *args):
         """
@@ -204,8 +203,10 @@ class Judge(object):
         """
         if self.ball.rect.x <= 0:
             self.score[0] += 1
+            self.ball.reset()
         elif self.ball.rect.x >= board_width-self.ball.width:
             self.score[1] += 1
+            self.ball.reset()
 
     def draw_text(self, surface, text, x, y):
         """
