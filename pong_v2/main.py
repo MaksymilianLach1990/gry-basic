@@ -30,5 +30,37 @@ class Board(object):
         pygame.display.update()
 
 
-board = Board(800, 500)
-board.draw()
+class PongGame(object):
+    """
+    Łączy wszystkie elementy gry w całość.
+    """
+
+    def __init__(self, width, height):
+        pygame.init()
+        self.board = Board(width, height)
+
+        self.fps_clock = pygame.time.Clock()
+
+    def run(self):
+        """
+        Główna pętla programu
+        """
+        while not self.handle_events():
+            self.board.draw()
+            self.fps_clock.tick(30)
+
+    def handle_events(self):
+        """
+        Obsługa zdarzeń systemowych
+        
+        :return True jeżeli pygame przekazał zdarzenie wyjścia z gry
+        """
+        for event in pygame.event.get():
+            if event.type == pygame.locals.QUIT:
+                pygame.quit()
+                return True    
+
+
+if __name__ == "__main__":
+    game = PongGame(800, 500)
+    game.run()
