@@ -41,17 +41,22 @@ class PongGame(object):
 
         self.fps_clock = pygame.time.Clock()
         self.ball = Ball(20, 20, width/2, height/2)
+        self.player1 = Racket(width=20, height=80, x=0, y=height/2)
+        self.player2 = Racket(width=20, height=80, x=width - 20, y= height/2)
+        self.ai = Ai(self.player2, self.ball)
 
     def run(self):
         """
         The main program loop.
         """
         while not self.handle_events():
-            self.ball.move(self.board)
+            self.ball.move(self.board, self.player1, self.player2)
             self.board.draw(
                 self.ball,
+                self.player1,
+                self.player2,
             )
-            
+            self.ai.move()
             self.fps_clock.tick(30)
 
 
@@ -64,7 +69,11 @@ class PongGame(object):
         for event in pygame.event.get():
             if event.type == pygame.locals.QUIT:
                 pygame.quit()
-                return True    
+                return True   
+
+            if event.type == pygame.locals.MOUSEMOTION:
+                x, y = event.pos
+                self.player1.move(y) 
 
 
 class Drawable(object):
@@ -114,7 +123,7 @@ class Ball(Drawable):
         self.rect.move(self.start_x, self.start_y)
         self.bounce_x()
 
-    def move(self, board):
+    def move(self, board, *args):
         """
         Moves the ball by the velocity vector.
         """
@@ -127,10 +136,14 @@ class Ball(Drawable):
         if self.rect.y < 0 or self.rect.y > board.surface.get_height():
             self.bounce_y()
 
+        for racket in args:
+            if self.rect.colliderect(racket.rect):
+                self.bounce_x()
+
 
 class Racket(Drawable):
     """
-    Rakietka, porusza się w osi Y z ograniczeniem prędkości.
+    Racket, it moves on the Y axis with a speed limit.
     """
 
     def __init__(self, width, height, x, y, color=(0,255, 0), max_speed=10):
@@ -140,7 +153,7 @@ class Racket(Drawable):
 
     def move(self, y):
         """
-        Przesuwa rakietkę w wyznaczone miejsce.
+        Moves the racket to the designated place.
         """
         delta = y - self.rect.y
         if abs(delta) > self.max_speed:
@@ -148,6 +161,17 @@ class Racket(Drawable):
         self.rect.y += delta
 
 
+class Ai(object):
+    """
+    The opponent controls his racket on the basis of observing the bll.
+    """
+    def __init__(self, racket, ball):
+        self.ball = ball
+        self.racket = racket
+
+    def move(self):
+        x = self.ball.rect.centerx
+        self.racket.move(x)
 
 if __name__ == "__main__":
     game = PongGame(800, 500)
