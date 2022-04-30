@@ -16,7 +16,7 @@ class Board(object):
         self.surface = pygame.display.set_mode((width, height), 0, 32)
         pygame.display.set_caption("Ping Pong")
 
-    def draw(self, args):
+    def draw(self, *args):
         """
         Draws the game window.
         
@@ -40,14 +40,20 @@ class PongGame(object):
         self.board = Board(width, height)
 
         self.fps_clock = pygame.time.Clock()
+        self.ball = Ball(20, 20, width/2, height/2)
 
     def run(self):
         """
         The main program loop.
         """
         while not self.handle_events():
-            self.board.draw()
+            self.ball.move(self.board)
+            self.board.draw(
+                self.ball,
+            )
+            
             self.fps_clock.tick(30)
+
 
     def handle_events(self):
         """
@@ -63,7 +69,7 @@ class PongGame(object):
 
 class Drawable(object):
     """
-    Base clss for drawn objects.
+    Base class for drawn objects.
     """
     def __init__(self, width, height, x, y, color=(0, 255, 0)):
         self.width = width
@@ -108,12 +114,38 @@ class Ball(Drawable):
         self.rect.move(self.start_x, self.start_y)
         self.bounce_x()
 
-    def move(self):
+    def move(self, board):
         """
         Moves the ball by the velocity vector.
         """
         self.rect.x += self.x_speed
         self.rect.y += self.y_speed
+
+        if self.rect.x < 0 or self.rect.x > board.surface.get_width():
+            self.bounce_x()
+        
+        if self.rect.y < 0 or self.rect.y > board.surface.get_height():
+            self.bounce_y()
+
+
+class Racket(Drawable):
+    """
+    Rakietka, porusza się w osi Y z ograniczeniem prędkości.
+    """
+
+    def __init__(self, width, height, x, y, color=(0,255, 0), max_speed=10):
+        super(Racket, self).__init__(width, height, x, y, color)
+        self.max_speed = max_speed
+        self.surface.fill(color)
+
+    def move(self, y):
+        """
+        Przesuwa rakietkę w wyznaczone miejsce.
+        """
+        delta = y - self.rect.y
+        if abs(delta) > self.max_speed:
+            delta = self.max_speed if delta > 0 else -self.max_speed
+        self.rect.y += delta
 
 
 if __name__ == "__main__":
