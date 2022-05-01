@@ -2,9 +2,8 @@ import pygame
 import pygame.locals
 
 """
-
-# Sterowanie klawiszami
-# Zwiększenie inteligencji NPC"""
+TODO: Smooth paddle movement
+"""
 
 
 class Board(object):
@@ -56,6 +55,7 @@ class PongGame(object):
         """
         The main program loop.
         """
+        print(not self.handle_events())
         while not self.handle_events():
             self.ball.move(self.board, self.player1, self.player2)
             self.board.draw(
@@ -74,14 +74,25 @@ class PongGame(object):
         
         :return True if pygame passed a quit event
         """
+
         for event in pygame.event.get():
             if event.type == pygame.locals.QUIT:
                 pygame.quit()
                 return True   
 
-            if event.type == pygame.locals.MOUSEMOTION:
-                x, y = event.pos
-                self.player1.move(y) 
+            # arrow up and down control
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    self.player1.move_arrow(-4)
+                if event.key == pygame.K_DOWN:
+                    self.player1.move_arrow(4)
+
+            # Mouse control
+            # if event.type == pygame.locals.MOUSEMOTION:
+            #     x, y = event.pos
+            #     self.player1.move(y) 
+            
+            
 
 
 class Drawable(object):
@@ -168,6 +179,17 @@ class Racket(Drawable):
             delta = self.max_speed if delta > 0 else -self.max_speed
         self.rect.y += delta
 
+    def move_arrow(self, arrow):
+        print(self.rect.y)
+        if arrow == 1:
+            if self.rect.y == pygame.display.get_window_size()[1] - self.height:
+                return
+            self.rect.y += arrow * self.max_speed
+        else:
+            if self.rect.y == 0:
+                return
+            self.rect.y += arrow * self.max_speed
+
 
 class Ai(object):
     """
@@ -178,8 +200,8 @@ class Ai(object):
         self.racket = racket
 
     def move(self):
-        x = self.ball.rect.centerx
-        self.racket.move(x)
+        y = self.ball.rect.centery
+        self.racket.move(y)
 
 
 class Judge(object):
