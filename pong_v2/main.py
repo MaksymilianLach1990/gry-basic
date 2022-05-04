@@ -1,10 +1,6 @@
 import pygame
 import pygame.locals
 
-"""
-TODO: Smooth paddle movement
-"""
-
 
 class Board(object):
     """
@@ -46,8 +42,8 @@ class PongGame(object):
 
         self.fps_clock = pygame.time.Clock()
         self.ball = Ball(20, 20, width/2, height/2)
-        self.player1 = Racket(width=20, height=80, x=0, y=height/2)
-        self.player2 = Racket(width=20, height=80, x=width - 20, y= height/2)
+        self.player1 = Racket(width=10, height=80, x=0, y=height/2)
+        self.player2 = Racket(width=10, height=80, x=width - 20, y= height/2, max_speed=10)
         self.ai = Ai(self.player2, self.ball)
         self.judge = Judge(self.board, self.ball, self.player2)
 
@@ -65,6 +61,7 @@ class PongGame(object):
                 self.judge,
             )
             self.ai.move()
+            self.player1.move_smooth()
             self.fps_clock.tick(30)
 
 
@@ -80,13 +77,18 @@ class PongGame(object):
                 pygame.quit()
                 return True   
 
-            # arrow up and down control
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    self.player1.move_arrow(-4)
                 if event.key == pygame.K_DOWN:
-                    self.player1.move_arrow(4)
+                    self.player1.max_speed += 7
+                if event.key == pygame.K_UP:
+                    self.player1.max_speed -= 7
 
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_DOWN:
+                    self.player1.max_speed -= 7
+                if event.key == pygame.K_UP:
+                    self.player1.max_speed += 7
+                
             # Mouse control
             # if event.type == pygame.locals.MOUSEMOTION:
             #     x, y = event.pos
@@ -114,7 +116,7 @@ class Ball(Drawable):
     """
     The ball itself controls its speed and the direction of movement.
     """
-    def __init__(self, width, height, x, y, color=(255, 0, 0), x_speed=3, y_speed=3):
+    def __init__(self, width, height, x, y, color=(255, 0, 0), x_speed=5, y_speed=5):
         super(Ball, self).__init__(width, height, x, y, color)
         pygame.draw.ellipse(self.surface, self.color, [0, 0, self.width, self.height])
         self.x_speed = x_speed
@@ -149,10 +151,10 @@ class Ball(Drawable):
         self.rect.x += self.x_speed
         self.rect.y += self.y_speed
 
-        if self.rect.x < 0 or self.rect.x >= board.surface.get_width()-self.width:
+        if self.rect.x <= 0 or self.rect.x >= board.surface.get_width()-self.width:
             self.bounce_x()
         
-        if self.rect.y < 0 or self.rect.y >= board.surface.get_height()-self.height:
+        if self.rect.y <= 0 or self.rect.y >= board.surface.get_height()-self.height:
             self.bounce_y()
 
         for racket in args:
@@ -165,7 +167,7 @@ class Racket(Drawable):
     Racket, it moves on the Y axis with a speed limit.
     """
 
-    def __init__(self, width, height, x, y, color=(0,255, 0), max_speed=10):
+    def __init__(self, width, height, x, y, color=(0,255, 0), max_speed=0):
         super(Racket, self).__init__(width, height, x, y, color)
         self.max_speed = max_speed
         self.surface.fill(color)
@@ -179,16 +181,13 @@ class Racket(Drawable):
             delta = self.max_speed if delta > 0 else -self.max_speed
         self.rect.y += delta
 
-    def move_arrow(self, arrow):
-        print(self.rect.y)
-        if arrow == 1:
-            if self.rect.y == pygame.display.get_window_size()[1] - self.height:
-                return
-            self.rect.y += arrow * self.max_speed
-        else:
-            if self.rect.y == 0:
-                return
-            self.rect.y += arrow * self.max_speed
+    def move_smooth(self):
+        if self.rect.top <= 0:
+            self.rect.top = 0
+        if self.rect.bottom >= pygame.display.get_window_size()[1]:
+            self.rect.bottom = pygame.display.get_window_size()[1]
+
+        self.rect.y += self.max_speed
 
 
 class Ai(object):
@@ -201,7 +200,14 @@ class Ai(object):
 
     def move(self):
         y = self.ball.rect.centery
+
         self.racket.move(y)
+
+        if self.racket.rect.top <= 0:
+            self.racket.rect.top = 0
+        if self.racket.rect.bottom >= pygame.display.get_window_size()[1]:
+            self.racket.rect.bottom = pygame.display.get_window_size()[1]
+        
 
 
 class Judge(object):
